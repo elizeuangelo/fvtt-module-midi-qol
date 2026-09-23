@@ -1,6 +1,7 @@
 # Ephemeral
 /references/
 /tmp/
+*.lock
 
 # Foundry specific
 /node_modules/

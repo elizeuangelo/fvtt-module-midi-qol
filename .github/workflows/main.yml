@@ -60,6 +60,8 @@ jobs:
             - name: Zip files
               shell: bash
               run: |
+                  rm -rf src/packs
+
                   zip -r "${{ steps.module.outputs.MODULE_ID }}.zip" \
                     css \
                     icons \
