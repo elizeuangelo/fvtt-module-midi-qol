@@ -161,11 +161,53 @@ export async function postTemplateConfirmTargets(item, options, pressedKeys, wor
 	}
 	return true;
 }
+function isBetterPotion(item) {
+	return configSettings.betterPotions
+		&& game.system.id === "dnd5e"
+		&& item.type === "consumable"
+		&& item.system.type?.value === "potion"
+		&& item.system.activation?.type === "action"
+		&& item.system.actionType === "heal";
+}
+
+async function configureBetterPotion(item, config) {
+	const AbilityUseDialog = game.dnd5e.applications.item.AbilityUseDialog;
+	let mode;
+	class BetterPotionUseDialog extends AbilityUseDialog {
+		constructor(item, dialogData = {}, options = {}) {
+			const useButton = dialogData.buttons.use;
+			const select = choice => html => {
+				mode = choice;
+				return useButton.callback(html);
+			};
+			dialogData.buttons = {
+				bonus: {
+					...useButton,
+					icon: '<i class="fas fa-bolt"></i>',
+					label: i18n("midi-qol.BetterPotions.Bonus"),
+					callback: select("bonus")
+				},
+				action: {
+					...useButton,
+					label: i18n("midi-qol.BetterPotions.Action"),
+					callback: select("action")
+				}
+			};
+			dialogData.default = "bonus";
+			super(item, dialogData, options);
+		}
+	}
+	const usageConfig = foundry.utils.mergeObject(item._getUsageConfig(), config, { inplace: false, overwrite: true });
+	const configured = await BetterPotionUseDialog.create(item, usageConfig);
+	return configured ? { config: configured, mode } : null;
+}
+
 export async function doItemUse(wrapped, config = {}, options = {}) {
 	if (debugEnabled > 0) {
 		warn("doItemUse called with", this.name, config, options, game.user?.targets);
 	}
 	try {
+		const betterPotionPromptRequested = options.configureDialog !== false;
 		// if confirming can't reroll till the first workflow is completed.
 		let previousWorkflow = Workflow.getWorkflow(this.uuid);
 		if (previousWorkflow) {
@@ -462,6 +504,14 @@ export async function doItemUse(wrapped, config = {}, options = {}) {
 		if (!shouldAllowRoll) {
 			return null;
 		}
+		if (betterPotionPromptRequested && isBetterPotion(this)) {
+			const potionUse = await configureBetterPotion(this, config);
+			if (!potionUse)
+				return null;
+			config = foundry.utils.mergeObject(config, potionUse.config, { inplace: false, overwrite: true });
+			options.configureDialog = false;
+			options.workflowOptions.tcrBetterPotions = potionUse.mode;
+		}
 		let workflow;
 		let workflowClass = config?.midi?.workflowClass ?? globalThis.MidiQOL.workflowClass;
 		if (!(workflowClass.prototype instanceof Workflow))
@@ -499,7 +549,7 @@ export async function doItemUse(wrapped, config = {}, options = {}) {
 			}
 		}
 		const hasBonusAction = hasUsedBonusAction(this.actor);
-		const itemUsesBonusAction = ["bonus"].includes(this.system.activation?.type);
+		const itemUsesBonusAction = ["bonus"].includes(this.system.activation?.type) || workflow.workflowOptions?.tcrBetterPotions === "bonus";
 		const blockBonus = workflow.inCombat && itemUsesBonusAction && hasBonusAction && needsBonusActionCheck(this.actor) && !options?.ammoSelector?.hasRun;
 		if (blockBonus) {
 			let shouldRoll = false;
@@ -1094,6 +1144,10 @@ export async function doDamageRoll(wrapped, { event = undefined, critical = fals
 			|| (targetMinFlags[this.system.actionType] && await evalActivationCondition(workflow, targetMinFlags[this.system.actionType], firstTarget, { async: true, errorReturn: false })));
 		if (needsMaxDamage && needsMinDamage) {
 			needsMaxDamage = false;
+			needsMinDamage = false;
+		}
+		if (workflow.workflowOptions?.tcrBetterPotions === "action") {
+			needsMaxDamage = true;
 			needsMinDamage = false;
 		}
 		let actionFlavor;

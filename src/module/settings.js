@@ -56,6 +56,7 @@ class ConfigSettings {
 		this.allowUseMacro = false;
 		this.allowActorUseMacro = false;
 		this.attackPerTarget = false;
+		this.betterPotions = false;
 		this.autoApplyDamage = "none";
 		this.playerDamageCard = "none";
 		this.playerCardDamageDifferent = false;
@@ -334,6 +335,8 @@ export let fetchParams = () => {
 	const promptDamageRoll = configSettings.promptDamageRoll ?? false;
 	//@ts-ignore
 	configSettings = game.settings.get("midi-qol", "ConfigSettings");
+	if (configSettings.betterPotions === undefined)
+		configSettings.betterPotions = false;
 	if (configSettings.saveDROrder === undefined)
 		configSettings.saveDROrder = "DRSavedr";
 	if (!configSettings.fumbleSound)

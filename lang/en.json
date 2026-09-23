@@ -941,5 +941,10 @@
   "midi-qol.CollapsibleTargets.Name": "Collapsible Targets",
   "midi-qol.CollapsibleTargets.Hint": "The Hit/Miss target display in the chat card are collapsible",
   "midi-qol.AutoRemoveInstantaneousTemplate.Name": "Auto remove instantaneous templates",
-  "midi-qol.AutoRemoveInstantaneousTemplate.Hint": "Templates placed by an item with duration instantaneous are removed at the end of the item roll"
+  "midi-qol.AutoRemoveInstantaneousTemplate.Hint": "Templates placed by an item with duration instantaneous are removed at the end of the item roll",
+  "midi-qol.TCR": "TCR",
+  "midi-qol.BetterPotions.Name": "Better Potions",
+  "midi-qol.BetterPotions.Hint": "Healing potions used with an action can instead be consumed as a bonus action for a normal healing roll, or as an action for maximum healing.",
+  "midi-qol.BetterPotions.Bonus": "Consume as Bonus Action",
+  "midi-qol.BetterPotions.Action": "Consume as Action"
 }

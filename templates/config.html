@@ -10,6 +10,7 @@
     <a class="item" data-tab="misc"><i class="fas fa-gears"></i> {{localize "midi-qol.Misc"}}</a>
     <a class="item" data-tab="game-mechanics"><i class="fas fa-gears"></i> {{localize "midi-qol.Mechanics"}}</a>
     <a class="item" data-tab="optional-rules"><i class="fas fa-gears"></i> {{localize "midi-qol.Optional"}}</a>
+    <a class="item" data-tab="tcr"><i class="fas fa-flask"></i> {{localize "midi-qol.TCR"}}</a>
     <a class="item" data-tab="quicksettings"><i class="fas fa-gears"></i> {{localize "midi-qol.QuickSettings"}}</a>
 
   </nav>
@@ -1055,6 +1056,17 @@
           <input id="useCustomSounds" type="checkbox" name="useCustomSounds" data-dtype="Boolean" {{checked
             configSettings.useCustomSounds}} />
           <div class="notes midi-qol-faint">{{{localize "midi-qol.UseCustomSounds.Hint"}}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TCR Tab -->
+    <div class="tab" data-tab="tcr" data-group="sections">
+      <div class="midi-qol-box">
+        <div class="form-group">
+          <label>{{localize "midi-qol.BetterPotions.Name"}}</label>
+          <input type="checkbox" name="betterPotions" data-dtype="Boolean" {{checked configSettings.betterPotions}} />
+          <div class="notes midi-qol-faint">{{localize "midi-qol.BetterPotions.Hint"}}</div>
         </div>
       </div>
     </div>

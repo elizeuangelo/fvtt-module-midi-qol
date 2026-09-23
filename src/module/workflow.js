@@ -1717,7 +1717,7 @@ export class Workflow {
 		const inCombat = isInCombat(this.actor);
 		let activeCombatants = game.combats?.combats.map(combat => combat.combatant?.token?.id);
 		const isTurn = activeCombatants?.includes(this.token?.id);
-		if (inCombat && isTurn && this.item?.system.activation.type === "action" && !this.AoO) {
+		if (inCombat && isTurn && this.item?.system.activation.type === "action" && this.workflowOptions?.tcrBetterPotions !== "bonus" && !this.AoO) {
 			await setActionUsed(this.actor);
 		}
 		return this.WorkflowState_Cleanup;
