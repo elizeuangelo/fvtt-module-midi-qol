@@ -1064,6 +1064,13 @@
     <div class="tab" data-tab="tcr" data-group="sections">
       <div class="midi-qol-box">
         <div class="form-group">
+          <label>{{localize "midi-qol.TCRDeathSaves.Name"}}</label>
+          <input type="checkbox" name="cripplingDeathSaves" data-dtype="Boolean" {{checked configSettings.cripplingDeathSaves}} {{#unless tcrDeathSavesAvailable}}disabled{{/unless}} />
+          <div class="notes midi-qol-faint">{{localize "midi-qol.TCRDeathSaves.Hint"}}</div>
+        </div>
+      </div>
+      <div class="midi-qol-box">
+        <div class="form-group">
           <label>{{localize "midi-qol.BetterPotions.Name"}}</label>
           <input type="checkbox" name="betterPotions" data-dtype="Boolean" {{checked configSettings.betterPotions}} />
           <div class="notes midi-qol-faint">{{localize "midi-qol.BetterPotions.Hint"}}</div>

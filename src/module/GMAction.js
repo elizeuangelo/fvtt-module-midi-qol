@@ -19,6 +19,7 @@ import { bonusCheck } from "./patching.js";
 import { queueUndoData, startUndoWorkflow, updateUndoChatCardUuids, _removeMostRecentWorkflow, _undoMostRecentWorkflow, undoTillWorkflow, _queueUndoDataDirect, updateUndoChatCardUuidsById } from "./undo.js";
 import { TroubleShooter } from "./apps/TroubleShooter.js";
 import { installedModules } from "./setupModules.js";
+import { chooseTcrHitDie } from "./tcrDeathSaves.js";
 export var socketlibSocket = undefined;
 var traitList = { di: {}, dr: {}, dv: {}, dm: {}, da: {} };
 export let setupSocket = () => {
@@ -30,6 +31,7 @@ export let setupSocket = () => {
 	socketlibSocket.register("applyEffects", _applyEffects);
 	socketlibSocket.register("bonusCheck", _bonusCheck);
 	socketlibSocket.register("chooseReactions", localDoReactions);
+	socketlibSocket.register("chooseTcrHitDie", chooseTcrHitDie);
 	socketlibSocket.register("completeItemUse", _completeItemUse);
 	socketlibSocket.register("confirmDamageRollComplete", confirmDamageRollComplete);
 	socketlibSocket.register("confirmDamageRollCompleteHit", confirmDamageRollCompleteHit);

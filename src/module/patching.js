@@ -6,6 +6,7 @@ import { installedModules } from "./setupModules.js";
 import { OnUseMacro, OnUseMacros } from "./apps/Item.js";
 import { mapSpeedKeys } from "./MidiKeyManager.js";
 import { TroubleShooter } from "./apps/TroubleShooter.js";
+import { beginTcrDeathSave, completeTcrDeathSave, endTcrDeathSave, isBarelyConscious, tcrDeathSaveHook, tcrDeathSavesEnabled, tcrEndTurn } from "./tcrDeathSaves.js";
 let libWrapper;
 var d20Roll;
 function _isVisionSource(wrapped) {
@@ -548,19 +549,29 @@ async function rollAbilityTest(wrapped, ...args) {
 	return doAbilityRoll.bind(this)(wrapped, "check", ...args);
 }
 async function rollDeathSave(wrapped, options) {
+	options ??= {};
+	if (tcrDeathSavesEnabled(this) && this.statuses.has("stable") && this.system.attributes.hp.value === 0) {
+		ui.notifications.warn("DND5E.DeathSaveUnnecessary", { localize: true });
+		return null;
+	}
 	mergeKeyboardOptions(options ?? {}, mapSpeedKeys(undefined, "ability"));
 	const advFlags = foundry.utils.getProperty(this, "flags.midi-qol")?.advantage;
 	const disFlags = foundry.utils.getProperty(this, "flags.midi-qol")?.disadvantage;
 	const deathSaveBonus = foundry.utils.getProperty(this, "flags.midi-qol")?.deathSaveBonus;
 	options.fastForward = autoFastForwardAbilityRolls ? !options.event?.fastKey : options.event?.fastKey;
-	if (advFlags?.all || advFlags?.deathSave || disFlags?.all || disFlags?.deathSave || deathSaveBonus) {
+	const genericSaveAdvantage = tcrDeathSavesEnabled(this) && advFlags?.ability?.save?.all;
+	const genericSaveDisadvantage = tcrDeathSavesEnabled(this) && disFlags?.ability?.save?.all;
+	if (advFlags?.all || advFlags?.deathSave || disFlags?.all || disFlags?.deathSave || deathSaveBonus
+		|| genericSaveAdvantage || genericSaveDisadvantage) {
 		const conditionData = createConditionData({ workflow: undefined, target: undefined, actor: this });
 		if (await evalAllConditionsAsync(this, "flags.midi-qol.advantage.all", conditionData) ||
-			await evalAllConditionsAsync(this, "flags.midi-qol.advantage.deathSave", conditionData)) {
+			await evalAllConditionsAsync(this, "flags.midi-qol.advantage.deathSave", conditionData) ||
+			(genericSaveAdvantage && await evalAllConditionsAsync(this, "flags.midi-qol.advantage.ability.save.all", conditionData))) {
 			options.advantage = true;
 		}
 		if (await evalAllConditionsAsync(this, "flags.midi-qol.disadvantage.all", conditionData) ||
-			await evalAllConditionsAsync(this, "flags.midi-qol.disadvantage.deathSave", conditionData)) {
+			await evalAllConditionsAsync(this, "flags.midi-qol.disadvantage.deathSave", conditionData) ||
+			(genericSaveDisadvantage && await evalAllConditionsAsync(this, "flags.midi-qol.disadvantage.ability.save.all", conditionData))) {
 			options.disadvantage = true;
 		}
 		if (deathSaveBonus) {
@@ -587,7 +598,13 @@ async function rollDeathSave(wrapped, options) {
 	const blindSaveRoll = configSettings.rollSavesBlind.includes("all") || configSettings.rollSavesBlind.includes("death");
 	if (blindSaveRoll)
 		options.rollMode = "blindroll";
-	return wrapped(options);
+	if (!beginTcrDeathSave(this)) return null;
+	try {
+		const roll = await wrapped(options);
+		await completeTcrDeathSave(this, roll);
+		return roll;
+	}
+	finally { endTcrDeathSave(this); }
 }
 export function preRollDeathSaveHook(actor, rollData) {
 	mergeKeyboardOptions(rollData ?? {}, mapSpeedKeys(undefined, "ability"));
@@ -616,6 +633,7 @@ export function preRollDeathSaveHook(actor, rollData) {
 	return true;
 }
 export function deathSaveHook(actor, result, details) {
+	if (tcrDeathSaveHook(actor, result, details)) return;
 	if (configSettings.addDead !== "none" && details.chatString === "DND5E.DeathSaveFailure") {
 		setDeadStatus(actor, { effect: getDeadStatus(), useDefeated: true, makeDead: true });
 		// setDeadStatus(actor, { effect: getUnconsciousStatus(), useDefeated: false, makeDead: false });
@@ -775,6 +793,13 @@ function midiATRefresh(wrapped) {
 export function _prepareDerivedData(wrapped, ...args) {
 	wrapped(...args);
 	try {
+		if (isBarelyConscious(this)) {
+			const movement = this.system.attributes.movement;
+			const maximum = movement.units === "m" ? 1.5 : 5;
+			for (const type of Object.keys(GameSystemConfig.movementTypes ?? {})) {
+				if (Number.isFinite(movement[type])) movement[type] = Math.min(movement[type], maximum);
+			}
+		}
 		if (!this.system.abilities?.dex)
 			return;
 		if (![false, undefined, "none"].includes(checkRule("challengeModeArmor"))) {
@@ -845,6 +870,12 @@ let currentDAcalculateDamage;
 let currentDAGetTargetOptions;
 export function initPatching() {
 	libWrapper = globalThis.libWrapper;
+	if (CONFIG.Combat.documentClass.prototype._onEndTurn) {
+		libWrapper.register(MODULE_ID, "CONFIG.Combat.documentClass.prototype._onEndTurn", async function (wrapped, combatant) {
+			await wrapped(combatant);
+			await tcrEndTurn(this, combatant);
+		}, "WRAPPER");
+	}
 	libWrapper.register(MODULE_ID, "CONFIG.Actor.documentClass.prototype.prepareDerivedData", _prepareDerivedData, "WRAPPER");
 	// For new onuse macros stuff.
 	libWrapper.register(MODULE_ID, "CONFIG.Item.documentClass.prototype.prepareData", itemPrepareData, "WRAPPER");
@@ -1099,6 +1130,7 @@ export function getInitiativeRoll(wrapped, options = { advantageMode: 0, fastFor
 		|| evalAllConditions(this, `flags.${game.system.id}.initiativeDisadv`, conditionData)) {
 		disadv = true;
 	}
+	if (isBarelyConscious(this)) disadv = true;
 	if (adv && disadv)
 		options.advantageMode = 0;
 	else if (adv)
@@ -1212,7 +1244,7 @@ export async function checkWounded(actor, update, options, user) {
 			}
 		}
 	}
-	if (configSettings.addDead !== "none") {
+	if (configSettings.addDead !== "none" && !tcrDeathSavesEnabled(actor)) {
 		let effect = getDeadStatus();
 		let useDefeated = true;
 		if ((actor.type === "character" || actor.hasPlayerOwner) && !vitalityResource) {

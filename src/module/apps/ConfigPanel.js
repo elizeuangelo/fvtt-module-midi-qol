@@ -106,6 +106,7 @@ export class ConfigPanel extends FormApplication {
 		}
 		let StatusEffectOptions = statusEffectList.reduce((acc, { id, name }) => { acc[id] = name; return acc; }, { "none": "None" });
 		let data = {
+			tcrDeathSavesAvailable: game.system.id === "dnd5e",
 			QuickSettingsBlurb: geti18nOptions("QuickSettingsBlurb"),
 			configSettings,
 			quickSettings: true,

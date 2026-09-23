@@ -10,6 +10,7 @@ import { TroubleShooter } from "./apps/TroubleShooter.js";
 import { Workflow } from "./workflow.js";
 import { ActorOnUseMacrosConfig } from "./apps/ActorOnUseMacroConfig.js";
 import { installedModules } from "./setupModules.js";
+import { DEEP_UNCONSCIOUS, isBarelyConscious, registerTcrDeathSaveHooks, tcrLongRest, tcrPreApplyDamage } from "./tcrDeathSaves.js";
 export const concentrationCheckItemName = "Concentration Check - Midi QOL";
 export var concentrationCheckItemDisplayName = "Concentration Check";
 export var midiFlagTypes = {};
@@ -77,7 +78,8 @@ export let readyHooks = async () => {
 				await zeroHPExpiry(actor, update, options, user);
 			};
 			await hpUpdateFunc();
-			if (actor.system.attributes.hp.value <= 0 && configSettings.removeConcentration) {
+			if (actor.system.attributes.hp.value <= 0 && configSettings.removeConcentration
+				&& (!isBarelyConscious(actor) || actor.statuses.has(DEEP_UNCONSCIOUS))) {
 				await actor.endConcentration();
 			}
 			return;
@@ -234,6 +236,7 @@ function registerBaBonusHooks() {
 export async function restManager(actor, result) {
 	if (!actor || !result)
 		return;
+	await tcrLongRest(actor, result);
 	const specialDuration = (effect) => { return foundry.utils.getProperty(effect, "flags.dae.specialDuration"); };
 	const effectsToExpire = (actorRef) => {
 		const effects = actorRef.appliedEffects;
@@ -260,6 +263,7 @@ export async function restManager(actor, result) {
 export function initHooks() {
 	if (debugEnabled > 0)
 		warn("Init Hooks processing");
+	registerTcrDeathSaveHooks();
 	Hooks.on("preCreateChatMessage", (message, data, options, user) => {
 		if (debugEnabled > 1)
 			debug("preCreateChatMessage entering", message, data, options, user);
@@ -1266,6 +1270,7 @@ function recalculateDamage(actor, amount, updates, options) {
 	updates['system.attributes.hp.value'] = newHpValue;
 }
 Hooks.on("dnd5e.preApplyDamage", (actor, amount, updates, options) => {
+	tcrPreApplyDamage(actor, amount, updates, options);
 	if (!configSettings.v3DamageApplication)
 		return true;
 	if (updates["system.attributes.hp.temp"])

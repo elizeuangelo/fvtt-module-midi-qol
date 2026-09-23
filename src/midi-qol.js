@@ -13,6 +13,7 @@ import { RollStats } from './module/RollStats.js';
 import { OnUseMacroOptions } from './module/apps/Item.js';
 import { MidiKeyManager } from './module/MidiKeyManager.js';
 import { MidiSounds } from './module/midi-sounds.js';
+import { BARELY_CONSCIOUS, DEEP_UNCONSCIOUS } from './module/tcrDeathSaves.js';
 import { addUndoChatMessage, getUndoQueue, removeMostRecentWorkflow, showUndoQueue, undoMostRecentWorkflow } from './module/undo.js';
 import { showUndoWorkflowApp } from './module/apps/UndoWorkflow.js';
 import { TroubleShooter } from './module/apps/TroubleShooter.js';
@@ -1193,6 +1194,17 @@ export function setupMidiStatusEffects() {
 	if (!CONFIG.statusEffects.find(e => e.id === systemConcentrationId)) {
 		//@ts-expect-error name
 		CONFIG.statusEffects.push({ id: systemConcentrationId, name: i18n(`EFFECT.${SystemString}.StatusConcentrating`), [imgSource]: "systems/dnd5e/icons/svg/statuses/concentrating.svg", special: "CONCENTRATING" });
+	}
+	if (game.system.id === "dnd5e") {
+		if (!CONFIG.statusEffects.some(e => e.id === BARELY_CONSCIOUS)) {
+			CONFIG.statusEffects.push({ id: BARELY_CONSCIOUS, _id: getStaticID("barelyconscious"), name: "midi-qol.TCRDeathSaves.BarelyConscious",
+				[imgSource]: "modules/midi-qol/icons/barely-conscious.svg" });
+		}
+		if (!CONFIG.statusEffects.some(e => e.id === DEEP_UNCONSCIOUS)) {
+			CONFIG.statusEffects.push({ id: DEEP_UNCONSCIOUS, _id: getStaticID("deepunconscious"),
+				name: "midi-qol.TCRDeathSaves.DeepUnconscious", [imgSource]: "modules/midi-qol/icons/deep-unconscious.svg",
+				statuses: ["unconscious", "incapacitated"] });
+		}
 	}
 	// Initialise these effects so that we don't need to make a raft of code aysnc only to fetch these
 	if (configSettings.enforceBonusActions !== "none") {
