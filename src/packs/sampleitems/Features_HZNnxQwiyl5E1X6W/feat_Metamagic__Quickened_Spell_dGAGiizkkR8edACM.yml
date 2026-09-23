@@ -1,0 +1,211 @@
+name: 'Metamagic: Quickened Spell'
+type: feat
+img: icons/magic/time/clock-stopwatch-white-blue.webp
+effects: []
+flags:
+  core:
+    sourceId: Compendium.dnd5e.classfeatures.nViGf6bZ6DQAJhkw
+  magicitems:
+    enabled: false
+    equipped: false
+    attuned: false
+    charges: '0'
+    chargeType: c1
+    destroy: false
+    destroyFlavorText: 'reaches 0 charges: it crumbles into ashes and is destroyed.'
+    rechargeable: false
+    recharge: '0'
+    rechargeType: t1
+    rechargeUnit: r1
+    sorting: l
+  itemacro:
+    macro:
+      name: 'Metamagic: Quickened Spell'
+      type: script
+      img: icons/svg/dice-target.svg
+      scope: global
+      command: >-
+        const points =
+        actor.items.get(item.system.consume.target).system.uses.value;
+
+        if (points < item.system.consume.amount) {
+            ui.notifications.warn("Not enough sorcery points to quicken spell");
+            return false;
+        }
+
+        const spellList = actor.items.filter(s=>
+            s.type === "spell" && 
+            s.system.activation.type === "action" 
+            && s.system.activation.cost === 1
+            && (s.system.preparation.mode !== "prepared" || s.system.preparation.prepared)
+        );
+
+        if (spellList.length === 0) return false;
+
+        d = new Promise(resolve => {
+            const buttons = {}
+            spellList.forEach(s => {
+                buttons[s.name] =  {
+                    label: `
+                        <div class="flexrow quicken-spell center" >
+                             <div class="item-image"> <image src=${s.img} width="40" height="40" style="margin:0px"></div>
+                            <div class="text">${s.name}</div>
+                        </div>`,
+                    callback: () => resolve(s.uuid)
+                }
+            });    const style = `
+            <style>
+                .quicken-spell .dialog-buttons {
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .quicken-spell .center {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 40px;
+                }
+                .quicken-spell .text {
+                    flex: 3 0 auto
+                }
+            </style>`;
+            new Dialog({
+                title: "Quickened Spell",
+                content: style + "Choose a spell",
+                buttons,
+                close: () => resolve(undefined),
+                default: spellList[0].name
+            },  {width: 320, classes: ["dialog", "quicken-spell"]}).render(true).render(true);
+        });
+
+        const result = await d;
+
+        if (!result) return false;
+
+        const theSpell = (await
+        fromUuid(result)).clone({"system.activation.type": "bonus"}, {keepId:
+        true});
+
+        const hookId = Hooks.on("dnd5e.preUseItem", (hookItem, config, options)
+        => {
+            if (hookItem !== item) return;
+            options.configureDialog = false;
+            config.consumeResource = true;
+            config.consumeResource = true;
+            Hooks.off("dnd5e.preUseItem", hookId);
+        });
+
+        spellResult = await MidiQOL.completeItemRoll(theSpell);
+
+        return spellResult ? true : false;
+      sort: 0
+      ownership:
+        default: 0
+      flags: {}
+      _stats:
+        systemId: null
+        systemVersion: null
+        coreVersion: null
+        createdTime: null
+        modifiedTime: null
+        lastModifiedBy: null
+  midi-qol:
+    effectActivation: false
+    onUseMacroName: '[preItemRoll]ItemMacro'
+    rollAttackPerTarget: default
+    itemCondition: ''
+    effectCondition: ''
+  midiProperties:
+    nodam: false
+    fulldam: false
+    halfdam: false
+    rollOther: false
+    critOther: false
+    magicdam: false
+    magiceffect: false
+    concentration: false
+    toggleEffect: false
+    autoFailFriendly: false
+    autoSaveFriendly: false
+    offHandWeapon: false
+    ignoreTotalCover: false
+    confirmTargets: default
+    noConcentrationCheck: false
+  cf:
+    id: temp_qt0kn9os0vl
+system:
+  description:
+    value: >-
+      <p>When you cast a spell that has a casting time of 1 action, you can
+      spend 2 sorcery points to change the casting time to 1 bonus action for
+      this casting.</p><p></p><p>Midi-qol: You must set the resource consumption
+      to Font of Magic after importing the item to an actor.</p>
+    chat: ''
+    unidentified: ''
+  source: PHB pg. 102
+  activation:
+    type: special
+    cost: null
+    condition: ''
+  duration:
+    value: ''
+    units: ''
+  cover: null
+  crewed: false
+  target:
+    value: null
+    width: null
+    units: ''
+    type: ''
+  range:
+    value: null
+    long: null
+    units: ''
+  uses:
+    value: 0
+    max: ''
+    per: null
+    recovery: ''
+  consume:
+    type: charges
+    target: ''
+    amount: 2
+  ability: ''
+  actionType: other
+  attackBonus: ''
+  chatFlavor: ''
+  critical:
+    threshold: null
+    damage: ''
+  damage:
+    parts: []
+    versatile: ''
+  formula: ''
+  save:
+    ability: ''
+    dc: null
+    scaling: spell
+  type:
+    value: ''
+    subtype: ''
+  requirements: Sorcerer 3
+  recharge:
+    value: null
+    charged: false
+_stats:
+  systemId: dnd5e
+  systemVersion: 3.2.1
+  coreVersion: '12.327'
+  createdTime: 1666525349712
+  modifiedTime: 1719455748764
+  lastModifiedBy: STcmc1QZ0hx024Tl
+  compendiumSource: Compendium.dnd5e.classfeatures.nViGf6bZ6DQAJhkw
+  duplicateSource: null
+ownership:
+  default: 0
+  devnIbfBHb74U9Zv: 3
+  ffUVCzLexh57kZfU: 3
+folder: HZNnxQwiyl5E1X6W
+sort: 2800000
+_id: dGAGiizkkR8edACM
+_key: '!items!dGAGiizkkR8edACM'

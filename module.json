@@ -1,0 +1,107 @@
+{
+	"id": "midi-qol",
+	"title": "Midi QOL",
+	"description": "Automates rolling weapon/spell attacks and applying damage",
+	"version": "autoreplaced",
+	"url": "autoreplaced",
+	"bugs": "autoreplaced",
+	"changelog": "autoreplaced",
+	"manifest": "autoreplaced",
+	"download": "autoreplaced",
+	"authors": [{ "name": "tposney", "discord": "tposney#1462", "ko-fi": "https://ko-fi.com/tposney" }],
+	"esmodules": ["src/midi-qol.js"],
+	"styles": ["css/styles.css"],
+	"compatibility": { "minimum": "11.302", "verified": "12.999", "maximum": "12.999" },
+	"flags": { "allowBugReporter": true },
+	"socket": true,
+	"relationships": {
+		"systems": [
+			{
+				"id": "dnd5e",
+				"type": "system",
+				"compatibility": {
+					"minimum": "3.3.0",
+					"maximum": "3.3.99"
+				}
+			},
+			{
+				"id": "sw5e",
+				"type": "system",
+				"compatibility": {
+					"minimum": "2.0.2.2.2.5",
+					"compatible": "2.0.2.2.2.5"
+				}
+			}
+		],
+		"requires": [
+			{
+				"id": "socketlib",
+				"type": "module"
+			},
+			{
+				"id": "lib-wrapper",
+				"type": "module"
+			},
+			{
+				"id": "dae",
+				"type": "module",
+				"compatibility": {
+					"minimum": "11.3.47"
+				}
+			}
+		]
+	},
+	"packs": [
+		{
+			"name": "midiqol-sample-items",
+			"label": "MidiQOL Sample Items",
+			"path": "./packs/sampleitems",
+			"module": "world",
+			"type": "Item",
+			"system": "dnd5e",
+			"lang": []
+		}
+	],
+	"languages": [
+		{
+			"lang": "en",
+			"name": "English",
+			"path": "lang/en.json"
+		},
+		{
+			"lang": "ja",
+			"name": " 日本語",
+			"path": "lang/ja.json"
+		},
+		{
+			"lang": "ko",
+			"name": "Korean",
+			"path": "lang/ko.json"
+		},
+		{
+			"lang": "fr",
+			"name": "Français",
+			"path": "lang/fr.json"
+		},
+		{
+			"lang": "pt-BR",
+			"name": "Português (Brasil)",
+			"path": "lang/pt-BR.json"
+		},
+		{
+			"lang": "es",
+			"name": "Spanish",
+			"path": "lang/es.json"
+		},
+		{
+			"lang": "de",
+			"name": "Deutsch",
+			"path": "lang/de.json"
+		},
+		{
+			"lang": "it",
+			"name": "Italian",
+			"path": "lang/it.json"
+		}
+	]
+}

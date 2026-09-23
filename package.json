@@ -1,0 +1,11 @@
+{
+	"name": "midi-qol",
+	"version": "11.6.32",
+	"scripts": {
+		"tools:pack": "node tools/pack.js",
+		"tools:unpack": "node tools/unpack.js"
+	},
+	"devDependencies": {
+		"@foundryvtt/foundryvtt-cli": "^1.1.0"
+	}
+}

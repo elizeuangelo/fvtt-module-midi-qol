@@ -1,0 +1,218 @@
+name: Shove
+type: feat
+img: icons/skills/melee/unarmed-punch-fist-white.webp
+system:
+  description:
+    value: '<p><em>This feature is safe to rename.</em></p><p>midi-qol: 11.0.7</p>'
+    chat: ''
+    unidentified: ''
+  source: ''
+  activation:
+    type: action
+    cost: 1
+    condition: ''
+  duration:
+    value: ''
+    units: ''
+  cover: null
+  crewed: false
+  target:
+    value: 1
+    width: null
+    units: ''
+    type: creature
+  range:
+    value: null
+    long: null
+    units: touch
+  uses:
+    value: null
+    max: ''
+    per: null
+    recovery: ''
+  consume:
+    type: ''
+    target: ''
+    amount: null
+  ability: ''
+  actionType: other
+  attackBonus: ''
+  chatFlavor: ''
+  critical:
+    threshold: null
+    damage: ''
+  damage:
+    parts: []
+    versatile: ''
+  formula: ''
+  save:
+    ability: ''
+    dc: null
+    scaling: spell
+  type:
+    value: ''
+    subtype: ''
+  requirements: ''
+  recharge:
+    value: null
+    charged: false
+effects: []
+flags:
+  custom-character-sheet-sections:
+    sectionName: Generic Actions
+  rest-recovery:
+    data:
+      recovery:
+        enabled: false
+  midi-qol:
+    effectActivation: false
+    onUseMacroName: '[postActiveEffects]ItemMacro'
+    rollAttackPerTarget: default
+    itemCondition: ''
+    effectCondition: ''
+  midiProperties:
+    nodam: false
+    fulldam: false
+    halfdam: false
+    autoFailFriendly: false
+    autoSaveFriendly: false
+    rollOther: false
+    critOther: false
+    offHandWeapon: false
+    magicdam: false
+    magiceffect: false
+    concentration: false
+    toggleEffect: false
+    ignoreTotalCover: false
+    confirmTargets: never
+    noConcentrationCheck: false
+  core: {}
+  cf:
+    id: null
+  itemacro:
+    macro:
+      name: Shove
+      type: script
+      scope: global
+      command: >-
+        try {
+            async function success(sourceToken, targetToken, results) {
+            d = new Dialog({
+                title: `${item.name} ${game.i18n.localize("midi-qol.save-success")}`,
+                content: "what do you want to do?",
+                buttons: {
+                                move: {
+                        icon: '<image src="icons/svg/direction.svg" width="30" height="30" style="border:0px">',
+                        label: "Move",
+                        callback: () => {MidiQOL.moveTokenAwayFromPoint(targetToken, 5, sourceToken.center)}
+                    },
+                    prone: {
+                        icon: '<image src="icons/svg/falling.svg" width="30" height="30" style="border:0px">',
+                        label: `${game.i18n.localize("EFFECT.StatusProne")}`,
+                        callback: () => {
+                            if (MidiQOL.hasCondition(targetToken, "Prone")) return;
+                            let se = CONFIG.statusEffects.find(i => { // This will find a convenient effect
+                                    if (i.statuses instanceof Set) return i.statuses.has("prone");
+                                    return i.statuses?.find(s => s === "prone")
+                                });
+                                
+                            if (!se) se = CONFIG.statusEffects.find(i => i.id === "prone"); // get the default status effect
+                            targetToken.toggleEffect(se, {active: true});
+                        }
+                    }
+
+                },
+                default: "move"
+            })
+            d.render(true);
+        }
+
+
+
+        if (!token) token = MidiQOL.tokenForActor(actor);
+
+        if (!token) {
+            ui.notifications.warn(`${actor.name} does not have a token on the canvas`)
+            return;
+        }
+
+        let target = workflow.targets?.first();
+
+        if (!target ) {
+            ui.Notificatons.warn(`${item.name} must have a token targeted`)
+            return;
+        }
+
+        const tokenSize = token.actor.system.traits.size;
+
+        const targetSize = target.actor.system.traits.size;
+
+        const tokenSizeNum =
+        Object.keys(CONFIG.DND5E.actorSizes).indexOf(tokenSize);
+
+        const targetSizeNum =
+        Object.keys(CONFIG.DND5E.actorSizes).indexOf(targetSize); 
+
+        if (targetSizeNum - tokenSizeNum > 1) {
+            ui.notifications.warn(`${item.name} creature size difference too great ${token.name}:${CONFIG.DND5E.actorSizes[tokenSize]} vs ${target.name}:${CONFIG.DND5E.actorSizes[targetSize]}`)
+            return;
+        }
+
+        const targetSkill = target.actor.system.skills.ath.total >
+        target.actor.system.skills.acr.total ? "ath" : "acr";
+
+        await MidiQOL.contestedRoll({
+            source: {token, rollType: "skill", ability: "Acrobatics"},
+            target: {token: target, rollType: "skill", ability: targetSkill},
+            flavor: item.name, success: success.bind(this, token, target), displayResults: true, itemCardId: workflow.itemCardId, 
+            rollOptions: {fastForward: false, chatMessage: true, rollMode: "gmroll"}
+        });
+
+        } catch (err) {
+            console.error(`${item.name} 11.0.7 item macro error`, err)
+        }
+
+        // A fun variant if the roll fails turn the tables and have the attacker
+        pushed back/made prone
+
+        /*
+
+        await MidiQOL.contestedRoll({
+            source: {token, rollType: "skill", ability: "Acrobatics"},
+            target: {token: target, rollType: "skill", ability: targetSkill},
+            flavor: item.name, success: success.bind(this, token, target), failure: success.bind(this, target, token) displayResults: true, itemCardId: workflow.itemCardId, 
+            rollOptions: {fastForward: false, chatMessage: true}
+        });
+
+        */
+      author: ffUVCzLexh57kZfU
+      _id: null
+      img: icons/svg/dice-target.svg
+      folder: null
+      sort: 0
+      ownership:
+        default: 0
+      flags: {}
+      _stats:
+        systemId: null
+        systemVersion: null
+        coreVersion: null
+        createdTime: null
+        modifiedTime: null
+        lastModifiedBy: null
+_stats:
+  systemId: dnd5e
+  systemVersion: 3.2.1
+  coreVersion: '12.327'
+  createdTime: 1683515482996
+  modifiedTime: 1719452586976
+  lastModifiedBy: STcmc1QZ0hx024Tl
+  compendiumSource: null
+  duplicateSource: null
+folder: DwSEDbDH7DaZq1Oa
+_id: JOTBk05coUKCNuDK
+sort: 0
+ownership:
+  default: 0
+  ffUVCzLexh57kZfU: 3
+_key: '!items!JOTBk05coUKCNuDK'

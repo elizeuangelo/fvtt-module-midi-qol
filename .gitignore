@@ -1,0 +1,7 @@
+# Ephemeral
+/references/
+/tmp/
+
+# Foundry specific
+/node_modules/
+/packs/

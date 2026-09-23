@@ -1,0 +1,83 @@
+name: Upload Release Assets
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+jobs:
+    build:
+        name: Upload Release Asset
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Install Dependencies
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+            - run: npm install
+
+            - name: Pack Compendiums
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+            - run: npm run tools:pack
+
+            - name: Get version
+              id: get_version
+              shell: bash
+              run: |
+                  echo "VERSION=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+                  echo "VERSION_NUMBER=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+            - name: Read module ID
+              id: module
+              shell: bash
+              run: |
+                  MODULE_ID=$(jq -r '.id' module.json)
+                  echo "MODULE_ID=$MODULE_ID" >> "$GITHUB_OUTPUT"
+
+            - name: Substitute Manifest and Download Links
+              uses: microsoft/variable-substitution@v1
+              with:
+                  files: 'module.json'
+              env:
+                  version: ${{ steps.get_version.outputs.VERSION_NUMBER }}
+                  url: https://github.com/${{ github.repository }}
+                  bugs: https://github.com/${{ github.repository }}/issues
+                  changelog: https://github.com/${{ github.repository }}/v${{ steps.get_version.outputs.VERSION_NUMBER }}/Changelog.md
+                  license: https://raw.githubusercontent.com/${{ github.repository }}/v${{ steps.get_version.outputs.VERSION_NUMBER }}/LICENSE
+                  readme: https://raw.githubusercontent.com/${{ github.repository }}/v${{ steps.get_version.outputs.VERSION_NUMBER }}/README.md
+                  manifest: https://github.com/${{ github.repository }}/releases/latest/download/module.json
+                  download: https://github.com/${{ github.repository }}/releases/download/v${{ steps.get_version.outputs.VERSION_NUMBER }}/${{ steps.module.outputs.MODULE_ID }}.zip
+
+            - name: Zip files
+              shell: bash
+              run: |
+                  zip -r "${{ steps.module.outputs.MODULE_ID }}.zip" \
+                    css \
+                    icons \
+                    lang \
+                    packs \
+                    sample-config \
+                    sounds \
+                    src \
+                    templates \
+                    LICENSE \
+                    module.json
+
+            - name: Create Release
+              uses: ncipollo/release-action@v1
+              with:
+                  tag: ${{ steps.get_version.outputs.VERSION }}
+                  name: Release ${{ steps.get_version.outputs.VERSION }}
+                  draft: false
+                  prerelease: false
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  artifacts: 'module.json,./${{ steps.module.outputs.MODULE_ID }}.zip'

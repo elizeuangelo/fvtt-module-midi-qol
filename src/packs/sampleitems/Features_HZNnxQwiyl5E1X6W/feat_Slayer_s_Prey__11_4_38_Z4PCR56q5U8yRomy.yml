@@ -1,0 +1,363 @@
+name: Slayer's Prey  11.4.38
+type: feat
+img: icons/magic/fire/projectile-arrow-fire-red-yellow.webp
+effects:
+  - _id: 4YzIMnzXG4F9fNLa
+    flags:
+      dae:
+        stackable: false
+        macroRepeat: none
+        transfer: false
+      ActiveAuras:
+        isAura: false
+        ignoreSelf: false
+        hidden: false
+        height: false
+        alignment: ''
+        type: ''
+        aura: None
+        radius: null
+        save: ''
+        savedc: null
+        hostile: false
+        onlyOnce: false
+        time: None
+    changes: []
+    disabled: false
+    duration:
+      startTime: null
+      seconds: 3600
+      combat: null
+      rounds: null
+      turns: null
+      startRound: null
+      startTurn: null
+    origin: Actor.bZz0UNijKQidTQEV.Item.gDJIoRL1J8BzIr3y
+    tint: '#ffffff'
+    transfer: false
+    name: Marked
+    description: ''
+    statuses: []
+    _stats:
+      coreVersion: '12.327'
+      systemId: null
+      systemVersion: null
+      createdTime: null
+      modifiedTime: null
+      lastModifiedBy: null
+      compendiumSource: null
+      duplicateSource: null
+    img: icons/magic/fire/projectile-arrow-fire-red-yellow.webp
+    type: base
+    system: {}
+    sort: 0
+    _key: '!items.effects!Z4PCR56q5U8yRomy.4YzIMnzXG4F9fNLa'
+flags:
+  magicitems:
+    enabled: false
+    equipped: false
+    attuned: false
+    charges: '0'
+    chargeType: c1
+    destroy: false
+    destroyFlavorText: 'reaches 0 charges: it crumbles into ashes and is destroyed.'
+    rechargeable: false
+    recharge: '0'
+    rechargeType: t1
+    rechargeUnit: r1
+    sorting: l
+  midi-qol:
+    onUseMacroName: '[postActiveEffects]ItemMacro'
+    effectActivation: false
+    onUseMacroParts:
+      '0':
+        '0': ItemMacro
+        '1': postActiveEffects
+    rollAttackPerTarget: default
+    itemCondition: ''
+    effectCondition: ''
+  itemacro:
+    macro:
+      data:
+        _id: null
+        name: Slayer's Prey
+        type: script
+        author: devnIbfBHb74U9Zv
+        img: icons/svg/dice-target.svg
+        scope: global
+        command: |-
+          // Sample Slayers prey
+          if (args[0].tag === "OnUse") {
+              let targetUuid = args[0].hitTargetUuids[0];
+              if (!actor || !targetUuid) {
+                console.error("Slayers's Prey: no token/target selected", targetUuid, actor);
+                return;
+              }
+              
+              // First remove the old effects from the target and ourselves 
+              let item = actor.items.get(args[0].id);
+
+              // have to remove the effect from old target if we are changing targets
+              let oldTargetUuid = getProperty(actor.data, "flags.midi-qol.slayersPrey");
+              if (oldTargetUuid && oldTargetUuid !== targetUuid) await DAE.deleteActiveEffect(oldTargetUuid, item.uuid)
+              
+              // Check if we already have the effect on ourselves.
+              let effect = actor.effects.find(e=>e.data.origin === args[0].itemUuid);
+
+              const effectData = {
+                changes: [
+                  {key: "flags.midi-qol.slayersPrey", mode: 5, value: targetUuid, priority: 20}, // who is marked
+                  {key: "flags.dnd5e.DamageBonusMacro", mode: 5, value: `ItemMacro.${args[0].item.name}`, priority: 20}, // macro to apply the damage
+                ],
+                origin: args[0].uuid, //flag the effect as associated to the spell being cast
+                disabled: false,
+                duration: args[0].item.effects[0].duration,
+                icon: args[0].item.img,
+                label: args[0].item.name
+              }
+              
+              if (effect) await effect.update(effectData);
+              else await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+          } else if (args[0].tag === "DamageBonus") {
+              if (args[0].hitTargets.length === 0) return;
+              const targetUuid = args[0].hitTargetUuids[0];
+              // only weapon attacks
+              if (!["mwak","rwak"].includes(args[0].item.data.actionType)) return {};
+              // only on the marked target
+              if (targetUuid !== getProperty(args[0].actor.flags, "midi-qol.slayersPrey")) return {};
+              let damageType = args[0].item.data.damage.parts[0][1];
+              return {damageRoll: `1d6[${damageType}]`, flavor: "Slayers Prey Damage"}
+          }
+        folder: null
+        sort: 0
+        permission:
+          default: 0
+        flags: {}
+      name: Slayer's Prey
+      type: script
+      img: icons/svg/dice-target.svg
+      scope: global
+      command: |-
+        // Sample Slayers prey
+        const version = "10.0.10";
+        try {
+          if (args[0].tag === "OnUse") {
+              let targetUuid = args[0].hitTargetUuids[0];
+              if (!actor || !targetUuid) {
+                console.error("Slayers's Prey: no token/target selected", targetUuid, actor);
+                return;
+              }
+              
+              // First remove the old effects from the target and ourselves 
+              let item = actor.items.get(args[0].id);
+
+              // have to remove the effect from old target if we are changing targets
+              let oldTargetUuid = getProperty(actor, "flags.midi-qol.slayersPrey");
+              if (oldTargetUuid && oldTargetUuid !== targetUuid) await DAE.deleteActiveEffect(oldTargetUuid, item.uuid)
+              
+              // Check if we already have the effect on ourselves.
+              let effect = actor.effects.find(e=>e.origin === args[0].itemUuid);
+
+              const effectData = {
+                changes: [
+                  {key: "flags.midi-qol.slayersPrey", mode: 5, value: targetUuid, priority: 20}, // who is marked
+                  {key: "flags.dnd5e.DamageBonusMacro", mode: 5, value: `ItemMacro.${args[0].item.name}`, priority: 20}, // macro to apply the damage
+                ],
+                origin: args[0].uuid, //flag the effect as associated to the spell being cast
+                disabled: false,
+                duration: args[0].item.effects[0].duration,
+                icon: args[0].item.img,
+                label: args[0].item.name
+              }
+              
+              if (effect) await effect.update(effectData);
+              else await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+          } else if (args[0].tag === "DamageBonus") {
+              if (args[0].hitTargets.length === 0) return;
+              const targetUuid = args[0].hitTargetUuids[0];
+              // only weapon attacks
+              if (!["mwak","rwak"].includes(args[0].item.system.actionType)) return {};
+              // only on the marked target
+              if (targetUuid !== getProperty(args[0].actor.flags, "midi-qol.slayersPrey")) return {};
+              let damageType = args[0].item.system.damage.parts[0][1];
+              return {damageRoll: `1d6[${damageType}]`, flavor: "Slayers Prey Damage"}
+          }
+        } catch (err) {
+            console.error(`Slayer's Prey ${version}`, err);
+        }
+      sort: 0
+      ownership:
+        default: 0
+      flags: {}
+      _stats:
+        systemId: null
+        systemVersion: null
+        coreVersion: null
+        createdTime: null
+        modifiedTime: null
+        lastModifiedBy: null
+  core:
+    sourceId: Item.gDJIoRL1J8BzIr3y
+  favtab:
+    isFavorite: false
+  cf:
+    id: temp_qt0kn9os0vl
+    color: '#000000'
+  midiProperties:
+    nodam: false
+    halfdam: false
+    fulldam: false
+    rollOther: false
+    critOther: false
+    concentration: false
+    magicdam: false
+    magiceffect: false
+    toggleEffect: false
+    autoFailFriendly: false
+    autoSaveFriendly: false
+    offHandWeapon: false
+    ignoreTotalCover: false
+    confirmTargets: default
+    noConcentrationCheck: false
+  scene-packer:
+    sourceId: Item.S4ZCosrLFDYt5f8h
+  dae:
+    macro:
+      name: Slayer's Prey  10.0.10
+      img: icons/magic/fire/projectile-arrow-fire-red-yellow.webp
+      type: script
+      scope: global
+      command: |-
+        // Sample Slayers prey
+        const version = "11.4.38";
+        try {
+          if (args[0].tag === "OnUse") {
+              let targetUuid = args[0].hitTargetUuids[0];
+              if (!actor || !targetUuid) {
+                console.error("Slayers's Prey: no token/target selected", targetUuid, actor);
+                return;
+              }
+              
+              // First remove the old effects from the target and ourselves 
+              let item = actor.items.get(args[0].id);
+
+              // have to remove the effect from old target if we are changing targets
+              let oldTargetUuid = getProperty(actor, "flags.midi-qol.slayersPrey");
+              if (oldTargetUuid && oldTargetUuid !== targetUuid) await DAE.deleteActiveEffect(oldTargetUuid, item.uuid)
+              
+              // Check if we already have the effect on ourselves.
+              let effect = actor.effects.find(e=>e.origin === args[0].itemUuid);
+
+              const effectData = {
+                changes: [
+                  {key: "flags.midi-qol.slayersPrey", mode: 5, value: targetUuid, priority: 20}, // who is marked
+                  {key: "flags.dnd5e.DamageBonusMacro", mode: 5, value: `ItemMacro.${args[0].item.name}`, priority: 20}, // macro to apply the damage
+                ],
+                origin: args[0].uuid, //flag the effect as associated to the spell being cast
+                disabled: false,
+                duration: args[0].item.effects[0].duration,
+                icon: args[0].item.img,
+                label: args[0].item.name
+              }
+              
+              if (effect) await effect.update(effectData);
+              else await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+          } else if (args[0].tag === "DamageBonus") {
+              if (args[0].hitTargets.length === 0) return;
+              const targetUuid = args[0].hitTargetUuids[0];
+              // only weapon attacks
+              if (!["mwak","rwak"].includes(args[0].item.system.actionType)) return {};
+              // only on the marked target
+              if (targetUuid !== foundry.utils.getProperty(args[0].actor.flags, "midi-qol.slayersPrey")) return {};
+              let damageType = args[0].item.system.damage.parts[0][1];
+              return {damageRoll: `1d6[${damageType}]`, flavor: "Slayers Prey Damage"}
+          }
+        } catch (err) {
+            console.error(`Slayer's Prey ${version}`, err);
+        }
+      author: STcmc1QZ0hx024Tl
+      ownership:
+        default: 3
+      _id: null
+      folder: null
+      sort: 0
+      flags: {}
+      _stats:
+        systemId: null
+        systemVersion: null
+        coreVersion: null
+        createdTime: null
+        modifiedTime: null
+        lastModifiedBy: null
+system:
+  description:
+    value: ''
+    chat: ''
+    unidentified: ''
+  source: ''
+  activation:
+    type: bonus
+    cost: 1
+    condition: ''
+  duration:
+    value: '1'
+    units: hour
+  cover: null
+  crewed: false
+  target:
+    value: 1
+    width: null
+    units: ''
+    type: creature
+  range:
+    value: 90
+    long: 90
+    units: ft
+  uses:
+    value: null
+    max: ''
+    per: null
+    recovery: ''
+  consume:
+    type: ''
+    target: ''
+    amount: null
+  ability: ''
+  actionType: util
+  attackBonus: ''
+  chatFlavor: ''
+  critical:
+    threshold: null
+    damage: ''
+  damage:
+    parts: []
+    versatile: ''
+  formula: ''
+  save:
+    ability: ''
+    dc: null
+    scaling: spell
+  type:
+    value: ''
+    subtype: ''
+  requirements: ''
+  recharge:
+    value: null
+    charged: false
+_stats:
+  systemId: dnd5e
+  systemVersion: 3.2.1
+  coreVersion: '12.327'
+  createdTime: 1661995926110
+  modifiedTime: 1719458299329
+  lastModifiedBy: STcmc1QZ0hx024Tl
+  compendiumSource: Item.gDJIoRL1J8BzIr3y
+  duplicateSource: null
+folder: HZNnxQwiyl5E1X6W
+sort: 3150000
+ownership:
+  default: 0
+  devnIbfBHb74U9Zv: 3
+  ffUVCzLexh57kZfU: 3
+_id: Z4PCR56q5U8yRomy
+_key: '!items!Z4PCR56q5U8yRomy'
