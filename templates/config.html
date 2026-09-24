@@ -1068,6 +1068,13 @@
           <input type="checkbox" name="cripplingDeathSaves" data-dtype="Boolean" {{checked configSettings.cripplingDeathSaves}} {{#unless tcrDeathSavesAvailable}}disabled{{/unless}} />
           <div class="notes midi-qol-faint">{{localize "midi-qol.TCRDeathSaves.Hint"}}</div>
         </div>
+        <div class="form-group">
+          <label>{{localize "midi-qol.TCRNpcDeathBehavior.Name"}}</label>
+          <select name="tcrNpcDeathBehavior" data-dtype="String" {{#unless tcrDeathSavesAvailable}}disabled{{/unless}}>
+            {{selectOptions tcrNpcDeathBehaviorOptions selected=configSettings.tcrNpcDeathBehavior}}
+          </select>
+          <div class="notes midi-qol-faint">{{localize "midi-qol.TCRNpcDeathBehavior.Hint"}}</div>
+        </div>
       </div>
       <div class="midi-qol-box">
         <div class="form-group">

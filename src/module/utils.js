@@ -1528,7 +1528,9 @@ export function checkIncapacitated(actorRef, logResult = true) {
 			(debug("No hp attribute for ", actor));
 		}
 		//@ts-expect-error .system
-		if (actor?.system?.attributes?.hp?.value <= 0 && !(configSettings.cripplingDeathSaves && game.system.id === "dnd5e" && actor.system.attributes.death?.failure < 3)) {
+		if (actor?.system?.attributes?.hp?.value <= 0 && !(configSettings.cripplingDeathSaves && game.system.id === "dnd5e"
+			&& (actor.type !== "npc" || configSettings.tcrNpcDeathBehavior !== "defeated")
+			&& actor.system.attributes.death?.failure < 3)) {
 			if (logResult)
 				log(`${actor.name} is incapacitated`);
 			return "dead";

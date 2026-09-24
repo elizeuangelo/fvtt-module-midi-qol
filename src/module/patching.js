@@ -6,7 +6,7 @@ import { installedModules } from "./setupModules.js";
 import { OnUseMacro, OnUseMacros } from "./apps/Item.js";
 import { mapSpeedKeys } from "./MidiKeyManager.js";
 import { TroubleShooter } from "./apps/TroubleShooter.js";
-import { beginTcrDeathSave, completeTcrDeathSave, endTcrDeathSave, isBarelyConscious, tcrDeathSaveHook, tcrDeathSavesEnabled, tcrEndTurn } from "./tcrDeathSaves.js";
+import { beginTcrDeathSave, completeTcrDeathSave, endTcrDeathSave, isBarelyConscious, tcrDeathSaveHook, tcrDeathSavesEnabled, tcrEndTurn, tcrNpcDefeatedAtZero } from "./tcrDeathSaves.js";
 let libWrapper;
 var d20Roll;
 function _isVisionSource(wrapped) {
@@ -550,6 +550,10 @@ async function rollAbilityTest(wrapped, ...args) {
 }
 async function rollDeathSave(wrapped, options) {
 	options ??= {};
+	if (tcrNpcDefeatedAtZero(this) && this.system.attributes.hp.value === 0) {
+		ui.notifications.warn("DND5E.DeathSaveUnnecessary", { localize: true });
+		return null;
+	}
 	if (tcrDeathSavesEnabled(this) && this.statuses.has("stable") && this.system.attributes.hp.value === 0) {
 		ui.notifications.warn("DND5E.DeathSaveUnnecessary", { localize: true });
 		return null;
@@ -1244,6 +1248,7 @@ export async function checkWounded(actor, update, options, user) {
 			}
 		}
 	}
+	if (tcrNpcDefeatedAtZero(actor)) return;
 	if (configSettings.addDead !== "none" && !tcrDeathSavesEnabled(actor)) {
 		let effect = getDeadStatus();
 		let useDefeated = true;

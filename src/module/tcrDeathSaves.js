@@ -7,6 +7,7 @@ export const DEEP_UNCONSCIOUS = "midi-qol-deep-unconscious";
 const STABLE = "stable";
 const DEAD = "dead";
 const DEEP_REST_RECOVERY = "tcrDeathSaves.deepRestRecovery";
+const NPC_DEFEATED_FLAG = "tcrNpcDefeated";
 const damageMarker = "flags.midi-qol.tcrDeathSaves.damage";
 const pendingSaves = new WeakMap();
 const rollingSaves = new WeakSet();
@@ -15,7 +16,13 @@ const processedTurns = new Set();
 let lastEnabled = false;
 
 export function tcrDeathSavesEnabled(actor) {
-	return configSettings.cripplingDeathSaves && game.system.id === "dnd5e" && !!actor?.system?.attributes?.death;
+	return configSettings.cripplingDeathSaves && game.system.id === "dnd5e"
+		&& !!actor?.system?.attributes?.death && !tcrNpcDefeatedAtZero(actor);
+}
+
+export function tcrNpcDefeatedAtZero(actor) {
+	return configSettings.cripplingDeathSaves && game.system.id === "dnd5e"
+		&& actor?.type === "npc" && configSettings.tcrNpcDeathBehavior === "defeated";
 }
 
 export function beginTcrDeathSave(actor) {
@@ -53,6 +60,19 @@ async function setStatus(actor, status, active) {
 }
 
 async function syncTcrDeathStatusesNow(actor, { damage = false } = {}) {
+	const ownedNpcDead = actor.effects.find(effect => effect.flags?.[MODULE_ID]?.[NPC_DEFEATED_FLAG]);
+	if (tcrNpcDefeatedAtZero(actor)) {
+		await setStatus(actor, BARELY_CONSCIOUS, false);
+		await setStatus(actor, DEEP_UNCONSCIOUS, false);
+		if (actor.system.attributes.hp.value === 0 && !hasStatus(actor, DEAD)) {
+			await actor.toggleStatusEffect(DEAD, { active: true, overlay: configSettings.addDead === "overlay" });
+			const effect = actor.effects.find(candidate => candidate.statuses.has(DEAD));
+			if (effect) await effect.setFlag(MODULE_ID, NPC_DEFEATED_FLAG, true);
+		}
+		else if (actor.system.attributes.hp.value > 0 && ownedNpcDead) await ownedNpcDead.delete();
+		return;
+	}
+	if (ownedNpcDead) await ownedNpcDead.delete();
 	if (!tcrDeathSavesEnabled(actor)) return;
 	const { hp, death } = actor.system.attributes;
 	const maximumHP = hp.effectiveMax ?? hp.max;
@@ -234,7 +254,7 @@ export async function completeTcrDeathSave(actor, roll) {
 }
 
 export async function tcrActorUpdated(actor, update, options, userId) {
-	if (userId !== game.user?.id || !tcrDeathSavesEnabled(actor)) return;
+	if (userId !== game.user?.id || !(tcrDeathSavesEnabled(actor) || tcrNpcDefeatedAtZero(actor))) return;
 	const hpChanged = (update["system.attributes.hp.value"] ?? foundry.utils.getProperty(update, "system.attributes.hp.value")) !== undefined
 		|| (update["system.attributes.hp.max"] ?? foundry.utils.getProperty(update, "system.attributes.hp.max")) !== undefined
 		|| (update["system.attributes.hp.tempmax"] ?? foundry.utils.getProperty(update, "system.attributes.hp.tempmax")) !== undefined;
@@ -293,6 +313,8 @@ async function reconcileTcrStatuses() {
 	for (const actor of actors) {
 		if (configSettings.cripplingDeathSaves) await syncTcrDeathStatuses(actor);
 		else {
+			const ownedNpcDead = actor.effects.find(effect => effect.flags?.[MODULE_ID]?.[NPC_DEFEATED_FLAG]);
+			if (ownedNpcDead) await ownedNpcDead.delete();
 			await setStatus(actor, BARELY_CONSCIOUS, false);
 			await setStatus(actor, DEEP_UNCONSCIOUS, false);
 		}
@@ -300,10 +322,16 @@ async function reconcileTcrStatuses() {
 }
 
 export function registerTcrDeathSaveHooks() {
-	Hooks.once("ready", () => { lastEnabled = !!configSettings.cripplingDeathSaves; void reconcileTcrStatuses(); });
+	const initialize = () => {
+		lastEnabled = `${!!configSettings.cripplingDeathSaves}:${configSettings.tcrNpcDeathBehavior}`;
+		void reconcileTcrStatuses();
+	};
+	if (game.ready) initialize();
+	else Hooks.once("ready", initialize);
 	Hooks.on("midi-qol.ConfigSettingsChanged", () => {
-		if (!game.ready || lastEnabled === !!configSettings.cripplingDeathSaves) return;
-		lastEnabled = !!configSettings.cripplingDeathSaves;
+		const current = `${!!configSettings.cripplingDeathSaves}:${configSettings.tcrNpcDeathBehavior}`;
+		if (!game.ready || lastEnabled === current) return;
+		lastEnabled = current;
 		void reconcileTcrStatuses();
 	});
 	Hooks.on("updateActor", tcrActorUpdated);
