@@ -264,6 +264,26 @@ export function initHooks() {
 	if (debugEnabled > 0)
 		warn("Init Hooks processing");
 	registerTcrDeathSaveHooks();
+	Hooks.on("preCreateActor", actor => {
+		if (game.system.id !== "dnd5e" || actor.type !== "character" || !configSettings.acLimitCharacters)
+			return;
+		if (actor.effects.some(effect => effect.getFlag(MODULE_ID, "acLimitCharacters")))
+			return;
+		actor.updateSource({ effects: [...actor.effects.map(effect => effect.toObject()), {
+			name: i18n("midi-qol.TCRACLimit.EffectName"),
+			img: "icons/svg/shield.svg",
+			description: i18n("midi-qol.TCRACLimit.EffectDescription"),
+			disabled: false,
+			transfer: false,
+			changes: [{
+				key: "system.attributes.ac.value",
+				mode: CONST.ACTIVE_EFFECT_MODES.DOWNGRADE,
+				value: "15 + @details.level",
+				priority: 100
+			}],
+			flags: { [MODULE_ID]: { acLimitCharacters: true } }
+		}] });
+	});
 	Hooks.on("preCreateChatMessage", (message, data, options, user) => {
 		if (debugEnabled > 1)
 			debug("preCreateChatMessage entering", message, data, options, user);

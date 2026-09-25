@@ -58,6 +58,7 @@ class ConfigSettings {
 		this.attackPerTarget = false;
 		this.betterPotions = false;
 		this.cripplingDeathSaves = false;
+		this.acLimitCharacters = false;
 		this.tcrNpcDeathBehavior = "defeated";
 		this.autoApplyDamage = "none";
 		this.playerDamageCard = "none";
@@ -341,6 +342,8 @@ export let fetchParams = () => {
 		configSettings.betterPotions = false;
 	if (configSettings.cripplingDeathSaves === undefined)
 		configSettings.cripplingDeathSaves = false;
+	if (configSettings.acLimitCharacters === undefined)
+		configSettings.acLimitCharacters = false;
 	if (!["deathSaves", "defeated"].includes(configSettings.tcrNpcDeathBehavior))
 		configSettings.tcrNpcDeathBehavior = "defeated";
 	if (configSettings.saveDROrder === undefined)

@@ -888,6 +888,7 @@ export function initPatching() {
 	libWrapper.register(MODULE_ID, "CONFIG.Actor.documentClass.prototype.getRollData", actorGetRollData, "WRAPPER");
 	libWrapper.register(MODULE_ID, "CONFIG.Item.documentClass.prototype.getRollData", itemGetRollData, "WRAPPER");
 	libWrapper.register(MODULE_ID, "CONFIG.ActiveEffect.documentClass.prototype._preCreate", _preCreateActiveEffect, "WRAPPER");
+	libWrapper.register(MODULE_ID, "CONFIG.ActiveEffect.documentClass.prototype._applyUpgrade", applyAcLimitDowngrade, "WRAPPER");
 	currentDAcalculateDamage = window?.customElements?.get("damage-application")?.prototype.calculateDamage;
 	if (window?.customElements?.get("damage-application")?.prototype?.calculateDamage) {
 		currentDAcalculateDamage = window?.customElements?.get("damage-application")?.prototype?.calculateDamage;
@@ -899,6 +900,19 @@ export function initPatching() {
 		//@ts-expect-error
 		window.customElements.get("damage-application").prototype.getTargetOptions = _DAgetTargetOptions;
 	}
+}
+function applyAcLimitDowngrade(wrapped, actor, change, current, delta, changes) {
+	const result = wrapped(actor, change, current, delta, changes);
+	// Foundry writes undefined for a no-op downgrade, which clears derived AC.
+	if (game.system.id === "dnd5e" && actor.type === "character"
+		&& change.key === "system.attributes.ac.value"
+		&& change.mode === CONST.ACTIVE_EFFECT_MODES.DOWNGRADE
+		&& this.getFlag(MODULE_ID, "acLimitCharacters")
+		&& Number.isFinite(current) && Number.isFinite(delta)
+		&& changes[change.key] === undefined) {
+		changes[change.key] = current;
+	}
+	return result;
 }
 function _DAgetTargetOptions(...args) {
 	let [uuid] = args;
