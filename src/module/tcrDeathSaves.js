@@ -255,6 +255,10 @@ export async function completeTcrDeathSave(actor, roll) {
 
 export async function tcrActorUpdated(actor, update, options, userId) {
 	if (userId !== game.user?.id || !(tcrDeathSavesEnabled(actor) || tcrNpcDefeatedAtZero(actor))) return;
+	// Advancement saves the actor and its class items in parallel. Until the items
+	// arrive, prepared HP can still be clamped to the old maximum (0 for a new PC).
+	// Reconcile once the advancement manager has finished all of those writes.
+	if (options?.isAdvancement) return;
 	const hpChanged = (update["system.attributes.hp.value"] ?? foundry.utils.getProperty(update, "system.attributes.hp.value")) !== undefined
 		|| (update["system.attributes.hp.max"] ?? foundry.utils.getProperty(update, "system.attributes.hp.max")) !== undefined
 		|| (update["system.attributes.hp.tempmax"] ?? foundry.utils.getProperty(update, "system.attributes.hp.tempmax")) !== undefined;
@@ -335,6 +339,7 @@ export function registerTcrDeathSaveHooks() {
 		void reconcileTcrStatuses();
 	});
 	Hooks.on("updateActor", tcrActorUpdated);
+	Hooks.on("dnd5e.advancementManagerComplete", manager => syncTcrDeathStatuses(manager.actor));
 	Hooks.on("dnd5e.preUseItem", tcrPreUseItem);
 	Hooks.on("dnd5e.preRollAttack", (item, data) => tcrDisadvantage(item.actor, data));
 	Hooks.on("dnd5e.preRollAbilitySave", tcrDisadvantage);
