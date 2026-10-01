@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
+import * as tcrRules from "../tcrDeathSaveRules.mjs";
 
 // Exercise the actual hook and synchronization code without booting Foundry.
 async function fixture() {
@@ -16,8 +17,8 @@ async function fixture() {
 	await module.link(specifier => {
 		const exports = specifier.endsWith("settings.js")
 			? { configSettings: { cripplingDeathSaves: true, tcrNpcDeathBehavior: "defeated" } }
-			: specifier.endsWith("midi-qol.js") ? { i18n: key => key, MODULE_ID: "midi-qol" }
-				: { resolveTcrDamage() {}, resolveTcrDeathSave() {} };
+			: specifier.endsWith("midi-qol.js") ? { i18n: key => key, i18nFormat: key => key, MODULE_ID: "midi-qol" }
+				: tcrRules;
 		return new vm.SyntheticModule(Object.keys(exports), function () {
 			for (const [key, value] of Object.entries(exports)) this.setExport(key, value);
 		}, { context });

@@ -1070,6 +1070,11 @@
           <div class="notes midi-qol-faint">{{localize "midi-qol.TCRDeathSaves.Hint"}}</div>
         </div>
         <div class="form-group">
+          <label>{{localize "midi-qol.TCRAllowedActions.Name"}}</label>
+          <string-tags class="tcr-action-tags" name="tcrAllowedActions" {{#unless tcrDnd5eAvailable}}disabled{{/unless}}></string-tags>
+          <div class="notes midi-qol-faint">{{localize "midi-qol.TCRAllowedActions.Hint"}}</div>
+        </div>
+        <div class="form-group">
           <label>{{localize "midi-qol.TCRNpcDeathBehavior.Name"}}</label>
           <select name="tcrNpcDeathBehavior" data-dtype="String" {{#unless tcrDnd5eAvailable}}disabled{{/unless}}>
             {{selectOptions tcrNpcDeathBehaviorOptions selected=configSettings.tcrNpcDeathBehavior}}

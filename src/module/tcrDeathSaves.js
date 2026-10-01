@@ -1,6 +1,6 @@
-import { i18n, MODULE_ID } from "../midi-qol.js";
+import { i18n, i18nFormat, MODULE_ID } from "../midi-qol.js";
 import { configSettings } from "./settings.js";
-import { resolveTcrDamage, resolveTcrDeathSave } from "./tcrDeathSaveRules.mjs";
+import { resolveTcrDamage, resolveTcrDeathSave, TCR_ACTION_IDS, normalizeTcrAllowedActions, isTcrActionAllowed } from "./tcrDeathSaveRules.mjs";
 
 export const BARELY_CONSCIOUS = "midi-qol-barely-conscious";
 export const DEEP_UNCONSCIOUS = "midi-qol-deep-unconscious";
@@ -297,9 +297,25 @@ export function tcrPreUseItem(item) {
 	if (!["action", "bonus"].includes(item.system.activation?.type)) return true;
 	if (hasStatus(actor, DEEP_UNCONSCIOUS)) return false;
 	if (item.getFlag(MODULE_ID, "tcrAllowedAction") === true) return true;
-	const actionNames = [item.system.identifier, item.name].filter(Boolean).map(name => name.trim().toLowerCase());
-	if (actionNames.some(name => /(^|[- :])(dash|disengage|dodge)$/.test(name))) return true;
-	ui.notifications.warn(i18n("midi-qol.TCRDeathSaves.ActionRestricted"));
+	const allowedActions = normalizeTcrAllowedActions(configSettings.tcrAllowedActions);
+	const labels = Object.fromEntries(allowedActions.map(action => [action, TCR_ACTION_IDS.includes(action)
+		? i18n(`midi-qol.TCRAllowedActionsOptions.${action}`) : action]));
+	if (isTcrActionAllowed(item, allowedActions, labels)) return true;
+	const restriction = allowedActions.length
+		? i18nFormat("midi-qol.TCRDeathSaves.ActionRestricted", { actions: Object.values(labels).join(", ") })
+		: i18n("midi-qol.TCRDeathSaves.NoActionsAllowed");
+	const content = document.createElement("p");
+	content.textContent = i18nFormat("midi-qol.TCRDeathSaves.ActionRestrictedAttempt", {
+		actor: actor.name, item: item.name, restriction
+	});
+	// Keep this hook synchronous so returning false still cancels item use.
+	void ChatMessage.create({
+		author: game.user.id,
+		speaker: ChatMessage.getSpeaker({ actor }),
+		content: content.outerHTML,
+		whisper: [...new Set([game.user.id, ...ChatMessage.getWhisperRecipients("GM").map(user => user.id)])],
+		blind: false
+	}).catch(error => console.warn("midi-qol | TCR restricted action whisper failed", error));
 	return false;
 }
 

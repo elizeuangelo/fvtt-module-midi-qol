@@ -5,6 +5,7 @@ import { TroubleShooter } from "./apps/TroubleShooter.js";
 import { configureDamageRollDialog } from "./patching.js";
 import { TargetConfirmationConfig } from "./apps/TargetConfirmationConfig.js";
 import { _updateAction } from "./utils.js";
+import { DEFAULT_TCR_ALLOWED_ACTIONS, normalizeTcrAllowedActions } from "./tcrDeathSaveRules.mjs";
 export var itemRollButtons;
 export var criticalDamage;
 export var criticalDamageGM;
@@ -58,6 +59,7 @@ class ConfigSettings {
 		this.attackPerTarget = false;
 		this.betterPotions = false;
 		this.cripplingDeathSaves = false;
+		this.tcrAllowedActions = [...DEFAULT_TCR_ALLOWED_ACTIONS];
 		this.acLimitCharacters = false;
 		this.tcrNpcDeathBehavior = "defeated";
 		this.autoApplyDamage = "none";
@@ -342,6 +344,7 @@ export let fetchParams = () => {
 		configSettings.betterPotions = false;
 	if (configSettings.cripplingDeathSaves === undefined)
 		configSettings.cripplingDeathSaves = false;
+	configSettings.tcrAllowedActions = normalizeTcrAllowedActions(configSettings.tcrAllowedActions);
 	if (configSettings.acLimitCharacters === undefined)
 		configSettings.acLimitCharacters = false;
 	if (!["deathSaves", "defeated"].includes(configSettings.tcrNpcDeathBehavior))

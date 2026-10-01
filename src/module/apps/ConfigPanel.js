@@ -2,6 +2,8 @@ import { criticalDamage, nsaFlag, coloredBorders, autoFastForwardAbilityRolls, i
 import { configSettings } from "../settings.js";
 import { warn, i18n, error, debug, gameStats, debugEnabled, geti18nOptions, log, GameSystemConfig } from "../../midi-qol.js";
 import { installedModules } from "../setupModules.js";
+import { normalizeTcrAllowedActions } from "../tcrDeathSaveRules.mjs";
+import { initializeTcrActionTags } from "./tcrActionTags.js";
 const PATH = "./modules/midi-qol/sample-config/";
 export class ConfigPanel extends FormApplication {
 	static get defaultOptions() {
@@ -197,6 +199,13 @@ export class ConfigPanel extends FormApplication {
 		}
 	}
 	activateListeners(html) {
+		const allowedActions = html[0].querySelector('string-tags[name="tcrAllowedActions"]');
+		if (allowedActions) initializeTcrActionTags(allowedActions, {
+			actions: configSettings.tcrAllowedActions,
+			options: geti18nOptions("TCRAllowedActionsOptions"),
+			placeholder: i18n("midi-qol.TCRAllowedActions.Placeholder"),
+			commonLabel: i18n("midi-qol.TCRAllowedActions.CommonActions")
+		});
 		html.find(".customSounds").change(() => {
 			configSettings.useCustomSounds = !configSettings.useCustomSounds;
 			this.render(true);
@@ -255,6 +264,10 @@ export class ConfigPanel extends FormApplication {
 	}
 	async _updateObject(event, formData) {
 		formData = foundry.utils.expandObject(formData);
+		if (game.system.id === "dnd5e") {
+			formData.tcrAllowedActions = normalizeTcrAllowedActions(formData.tcrAllowedActions ?? [],
+				geti18nOptions("TCRAllowedActionsOptions"));
+		}
 		formData.itemTypeList = configSettings.itemTypeList;
 		let newSettings = foundry.utils.mergeObject(configSettings, formData, { overwrite: true, inplace: false });
 		// const newSettings = foundry.utils.mergeObject(configSettings, expand, {overwrite: true})

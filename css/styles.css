@@ -272,6 +272,52 @@
   color: #fff;
 }
 
+#midi-qol-settings string-tags.tcr-action-tags {
+  position: relative;
+  gap: 4px;
+  padding: 5px 34px 5px 5px;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+#midi-qol-settings .tcr-action-tags:focus-within {
+  border-color: var(--color-border-highlight);
+}
+
+#midi-qol-settings .tcr-action-tags > .tags {
+  display: contents;
+}
+
+#midi-qol-settings .tcr-action-tags .tag .remove::before {
+  content: "\00d7";
+  font-family: Arial, sans-serif;
+}
+
+#midi-qol-settings .tcr-action-tags > input {
+  flex: 1 1 150px;
+  min-width: 0;
+  height: 24px;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+#midi-qol-settings .tcr-action-tags > button[hidden] {
+  display: none;
+}
+
+#midi-qol-settings .tcr-action-tags > select.tcr-common-actions {
+  position: absolute;
+  top: 5px;
+  right: 4px;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
 .midi-qol .grid {
     display: grid;
     grid-template-columns: auto auto auto;
