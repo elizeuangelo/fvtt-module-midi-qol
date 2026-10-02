@@ -1,4 +1,7 @@
 {
+  "midi-qol.TCRUnstable.Name": "Exibir condição Instável",
+  "midi-qol.TCRUnstable.Hint": "Exibe um efeito puramente visual de Instável com 0 PV enquanto as salvaguardas contra a morte estão pendentes. Removido quando o personagem fica estável, morto, derrotado ou recupera PV. Funciona com salvaguardas contra a morte normais e debilitantes. Requer D&D 5e.",
+  "midi-qol.TCRUnstable.EffectName": "Instável",
   "midi-qol.ItemDeleteCheck.Name": "Verificação de Exclusão de Item",
   "midi-qol.ItemDeleteCheck.Hint": "Abre um diálogo de confirmação quando tentar deletar items da ficha de personagem.",
   "midi-qol.DamageImmunities.Name": "Aplicar Imunidades de Dano",

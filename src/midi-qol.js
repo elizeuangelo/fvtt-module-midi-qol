@@ -14,6 +14,7 @@ import { OnUseMacroOptions } from './module/apps/Item.js';
 import { MidiKeyManager } from './module/MidiKeyManager.js';
 import { MidiSounds } from './module/midi-sounds.js';
 import { BARELY_CONSCIOUS, DEEP_UNCONSCIOUS } from './module/tcrDeathSaves.js';
+import { UNSTABLE } from './module/tcrUnstable.js';
 import { addUndoChatMessage, getUndoQueue, removeMostRecentWorkflow, showUndoQueue, undoMostRecentWorkflow } from './module/undo.js';
 import { showUndoWorkflowApp } from './module/apps/UndoWorkflow.js';
 import { TroubleShooter } from './module/apps/TroubleShooter.js';
@@ -1196,6 +1197,10 @@ export function setupMidiStatusEffects() {
 		CONFIG.statusEffects.push({ id: systemConcentrationId, name: i18n(`EFFECT.${SystemString}.StatusConcentrating`), [imgSource]: "systems/dnd5e/icons/svg/statuses/concentrating.svg", special: "CONCENTRATING" });
 	}
 	if (game.system.id === "dnd5e") {
+		if (!CONFIG.statusEffects.some(e => e.id === UNSTABLE)) {
+			CONFIG.statusEffects.push({ id: UNSTABLE, _id: getStaticID("unstable"), name: "midi-qol.TCRUnstable.EffectName",
+				[imgSource]: "modules/midi-qol/icons/unstable.svg", changes: [] });
+		}
 		if (!CONFIG.statusEffects.some(e => e.id === BARELY_CONSCIOUS)) {
 			CONFIG.statusEffects.push({ id: BARELY_CONSCIOUS, _id: getStaticID("barelyconscious"), name: "midi-qol.TCRDeathSaves.BarelyConscious",
 				[imgSource]: "modules/midi-qol/icons/barely-conscious.svg" });

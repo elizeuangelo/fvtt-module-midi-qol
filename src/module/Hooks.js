@@ -11,6 +11,7 @@ import { Workflow } from "./workflow.js";
 import { ActorOnUseMacrosConfig } from "./apps/ActorOnUseMacroConfig.js";
 import { installedModules } from "./setupModules.js";
 import { DEEP_UNCONSCIOUS, isBarelyConscious, registerTcrDeathSaveHooks, tcrLongRest, tcrPreApplyDamage } from "./tcrDeathSaves.js";
+import { registerTcrUnstableHooks } from "./tcrUnstable.js";
 export const concentrationCheckItemName = "Concentration Check - Midi QOL";
 export var concentrationCheckItemDisplayName = "Concentration Check";
 export var midiFlagTypes = {};
@@ -264,6 +265,7 @@ export function initHooks() {
 	if (debugEnabled > 0)
 		warn("Init Hooks processing");
 	registerTcrDeathSaveHooks();
+	registerTcrUnstableHooks();
 	Hooks.on("preCreateActor", actor => {
 		if (game.system.id !== "dnd5e" || actor.type !== "character" || !configSettings.acLimitCharacters)
 			return;

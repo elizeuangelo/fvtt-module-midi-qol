@@ -7,6 +7,7 @@ import { OnUseMacro, OnUseMacros } from "./apps/Item.js";
 import { mapSpeedKeys } from "./MidiKeyManager.js";
 import { TroubleShooter } from "./apps/TroubleShooter.js";
 import { beginTcrDeathSave, completeTcrDeathSave, endTcrDeathSave, isBarelyConscious, tcrDeathSaveHook, tcrDeathSavesEnabled, tcrEndTurn, tcrNpcDefeatedAtZero } from "./tcrDeathSaves.js";
+import { syncTcrUnstableStatus, trackTcrUnstableDeathSave } from "./tcrUnstable.js";
 let libWrapper;
 var d20Roll;
 function _isVisionSource(wrapped) {
@@ -606,6 +607,7 @@ async function rollDeathSave(wrapped, options) {
 	try {
 		const roll = await wrapped(options);
 		await completeTcrDeathSave(this, roll);
+		if (roll) await syncTcrUnstableStatus(this);
 		return roll;
 	}
 	finally { endTcrDeathSave(this); }
@@ -637,7 +639,9 @@ export function preRollDeathSaveHook(actor, rollData) {
 	return true;
 }
 export function deathSaveHook(actor, result, details) {
-	if (tcrDeathSaveHook(actor, result, details)) return;
+	const handled = tcrDeathSaveHook(actor, result, details);
+	trackTcrUnstableDeathSave(actor, details);
+	if (handled) return;
 	if (configSettings.addDead !== "none" && details.chatString === "DND5E.DeathSaveFailure") {
 		setDeadStatus(actor, { effect: getDeadStatus(), useDefeated: true, makeDead: true });
 		// setDeadStatus(actor, { effect: getUnconsciousStatus(), useDefeated: false, makeDead: false });
