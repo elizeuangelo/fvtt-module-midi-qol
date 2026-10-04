@@ -748,6 +748,8 @@ export async function doItemUse(wrapped, config = {}, options = {}) {
 		if (debugCallTiming)
 			log(`item.roll() elapsed ${Date.now() - itemRollStart}ms`);
 		// Need concentration removal to complete before allowing workflow to continue so have workflow wait for item use to complete
+		// Link the placed template before the workflow can wait for damage or saves.
+		await workflow.linkTemplateToConcentration();
 		workflow.preItemUseComplete = true;
 		// workflow is suspended pending completion of the itemUse actions?
 		const shouldUnsuspend = ([workflow.WorkflowState_AwaitItemCard, workflow.WorkflowState_AwaitTemplate, workflow.WorkflowState_NoAction].includes(workflow.currentAction) && workflow.suspended && !workflow.needTemplate && !workflow.needItemCard);

@@ -233,7 +233,13 @@ export class Workflow {
 		}
 		this.needTemplate = (getAutoTarget(this.item) !== "none" && this.item?.hasAreaTarget && !hasAutoPlaceTemplate(this.item));
 		if (this.item?.hasAreaTarget && !hasAutoPlaceTemplate(this.item))
-			this.placeTemplateHookId = Hooks.once("createMeasuredTemplate", selectTargets.bind(this));
+			this.placeTemplateHookId = Hooks.once("createMeasuredTemplate", async (...args) => {
+				const result = selectTargets.call(this, ...args);
+				// Templates placed from the chat card can arrive after item use has finished.
+				if (this.preItemUseComplete)
+					await this.linkTemplateToConcentration();
+				return result;
+			});
 		if (this.needTemplate && options.noTemplateHook !== true) {
 			if (debugEnabled > 0)
 				warn("registering for preCreateMeasuredTemplate, createMeasuredTemplate");
@@ -1474,6 +1480,28 @@ export class Workflow {
 			log(`applyActiveEffects elapsed ${Date.now() - applyDynamicEffectsStartTime}ms`);
 		return this.WorkflowState_RollFinished;
 	}
+	async linkTemplateToConcentration() {
+		// Item use creates concentration before damage/saves. Bind to that cast's
+		// effect immediately, without reviving an expired cast or using a stale template.
+		if (this._templateConcentrationLink)
+			await this._templateConcentrationLink;
+		if (this.aborted || !this.item?.requiresConcentration || !this.templateUuid)
+			return;
+		const concentrationId = this.chatCard?.getFlag("dnd5e", "use.concentrationId");
+		const origin = concentrationId && this.actor?.effects.get(concentrationId);
+		const template = MQfromUuidSync(this.templateUuid);
+		if (!(origin instanceof ActiveEffect) || !template)
+			return;
+		if (origin.getFlag("dnd5e", "dependents")?.some(dep => dep.uuid === template.uuid))
+			return;
+		this._templateConcentrationLink = origin.addDependent(template);
+		try {
+			await this._templateConcentrationLink;
+		}
+		finally {
+			this._templateConcentrationLink = undefined;
+		}
+	}
 	async WorkflowState_Cleanup(context = {}) {
 		if (this.placeTemplateHookId) {
 			Hooks.off("createMeasuredTemplate", this.placeTemplateHookId);
@@ -1593,11 +1621,7 @@ export class Workflow {
 		let hasConcentration = this.item.requiresConcentration;
 		const template = this.template ? this.template : MQfromUuidSync(this.templateUuid);
 		if (hasConcentration && template && this.chatCard.getFlag("dnd5e", "use.concentrationId")) {
-			let origin = this.actor.effects.get(this.chatCard.getFlag("dnd5e", "use.concentrationId"));
-			if (origin instanceof ActiveEffect) {
-				//@ts-expect-error
-				await origin.addDependent(this.template);
-			}
+			await this.linkTemplateToConcentration();
 		}
 		else if (installedModules.get("dae") && this.item?.hasAreaTarget && template && this.item?.system.duration?.units && configSettings.autoRemoveTemplate) { // create an effect to delete the template
 			// If we are not applying concentration and want to auto remove the template create an effect to do so
