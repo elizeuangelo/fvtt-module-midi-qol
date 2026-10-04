@@ -232,7 +232,9 @@ export class Workflow {
 			}
 		}
 		this.needTemplate = (getAutoTarget(this.item) !== "none" && this.item?.hasAreaTarget && !hasAutoPlaceTemplate(this.item));
-		if (this.item?.hasAreaTarget && !hasAutoPlaceTemplate(this.item))
+		// Temporary workflows opt out of template events; waking them executes
+		// DummyWorkflow's Suspend sentinel instead of the real casting workflow.
+		if (this.item?.hasAreaTarget && !hasAutoPlaceTemplate(this.item) && options.noTemplateHook !== true)
 			this.placeTemplateHookId = Hooks.once("createMeasuredTemplate", async (...args) => {
 				const result = selectTargets.call(this, ...args);
 				// Templates placed from the chat card can arrive after item use has finished.
