@@ -1,6 +1,6 @@
 {
 	"name": "midi-qol",
-	"version": "11.7.6",
+	"version": "11.7.7",
 	"scripts": {
 		"tools:pack": "node tools/pack.js",
 		"tools:unpack": "node tools/unpack.js"
