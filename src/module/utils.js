@@ -802,7 +802,8 @@ export function midiCustomEffect(...args) {
 				args[0] = `ItemMacro.${change.effect.parent.uuid}`;
 			// else if (sourceId) args[0] = `ItemMacro.${sourceId}`;
 			else {
-				if (change.effect.origin.includes("Item.")) {
+				// origin can be null (e.g. actors loaded from a compendium, or effects created without an origin)
+				if (change.effect?.origin?.includes("Item.")) {
 					args[0] = `ItemMacro.${change.effect.origin}`;
 				}
 				else {
